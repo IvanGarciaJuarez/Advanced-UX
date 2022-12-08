@@ -1,0 +1,40 @@
+#inlezen data met haven spss data
+install.packages('haven')
+library(haven)
+surveydata <- read_sav("Data.sav")
+
+#column toevoegen voor welk prototype
+Prototype12 = c('p1','p2','p2','p1','p1','p2','p1','p1','p1','p1','p2','p1','p1','p2','p1','p1','p1','p2','p2','p2','p2','p1','p2','p1','p2','p2','p1','p1')
+surveydata$Prototype12 = Prototype12
+
+#scale testen om te kijken of de survey goed is opgesteld
+library(ltm)
+cronbach.alpha(surveydata[,18:29])
+
+#Tabel met opgetelde waardes per user
+Opgeteldescore_user <- rowSums(surveydata[,18:29])
+TabelOpgeteld <- data.frame(Opgeteldescore_user,Prototype12)
+
+
+#normaliteitstesten
+library(nortest)
+tapply(TabelOpgeteld$Opgeteldescore_user, TabelOpgeteld$Prototype12, shapiro.test)
+tapply(TabelOpgeteld$Opgeteldescore_user, TabelOpgeteld$Prototype12, lillie.test)
+
+library(car)
+leveneTest(TabelOpgeteld$Opgeteldescore_user ~ TabelOpgeteld$Prototype12, data=TabelOpgeteld)
+
+#alle p-waarden boven 0.05
+#Independent samples t test, between parametrische testen
+t.test(Opgeteldescore_user ~ Prototype12, data = TabelOpgeteld, var.equal = TRUE)
+
+
+
+# Create a box-plot
+install.packages('ggpubr')
+library('ggpubr')
+library('ggplot2')
+ggboxplot(TabelOpgeteld, x = "Prototype12", y = "Opgeteldescore_user", 
+          order = c("p1", "p2"),
+          ylab = "Score", xlab = "Prototype", add = 'jitter') + ggtitle("Score op 60 per prototype")
+
